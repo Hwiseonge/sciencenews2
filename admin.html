@@ -11,97 +11,167 @@
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
         #editor { min-height: 300px; border: 2px solid #e2e8f0; border-radius: 1.5rem; padding: 1.5rem; background: white; outline: none; }
-        #editor img { max-width: 100%; border-radius: 1rem; margin: 1rem 0; }
+        #editor img { max-width: 100%; border-radius: 1rem; margin: 1rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body class="p-10 pb-32">
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-12">
-            <h1 class="text-3xl font-black tracking-tighter">통합 관리자 센터</h1>
+            <h1 class="text-3xl font-black tracking-tighter cursor-pointer" onclick="location.href='index.html'">통합 관리자 센터</h1>
             <button onclick="sessionStorage.removeItem('isAdmin'); location.href='index.html';" class="text-sm font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full">로그아웃</button>
         </header>
 
         <section class="bg-white p-8 rounded-3xl border shadow-sm mb-12 space-y-4">
             <h2 class="text-xl font-bold">1. 뉴스 발행 ✍️</h2>
             <div class="grid grid-cols-2 gap-4">
-                <select id="main-cat" onchange="updateSub()" class="p-3 border rounded-xl font-bold bg-slate-50 outline-none"><option value="과학">과학</option><option value="인문">인문</option><option value="사회">사회</option></select>
-                <select id="sub-cat" class="p-3 border rounded-xl font-bold bg-slate-50 outline-none"></select>
+                <select id="main-cat" class="p-3 border rounded-xl font-bold bg-slate-50 outline-none">
+                    <option value="과학">과학</option>
+                    <option value="인문">인문</option>
+                    <option value="사회">사회</option>
+                </select>
+                <input id="sub-cat" type="text" placeholder="소분류 (예: 우주, AI)" class="p-3 border rounded-xl font-bold bg-slate-50 outline-none">
             </div>
             <input id="title" type="text" placeholder="기사 제목을 입력하세요" class="w-full p-4 border rounded-xl font-bold text-xl outline-none focus:border-indigo-500">
-            <div class="flex justify-between items-center text-xs font-bold text-slate-400"><span>기사 본문</span><label class="cursor-pointer text-indigo-600">이미지 추가<input type="file" accept="image/*" class="hidden" onchange="insertImage(this)"></label></div>
+            <div class="flex justify-between items-center text-xs font-bold text-slate-400">
+                <span>기사 본문</span>
+                <label class="cursor-pointer text-indigo-600 hover:underline">
+                    이미지 추가
+                    <input type="file" accept="image/*" class="hidden" onchange="insertImage(this)">
+                </label>
+            </div>
             <div id="editor" contenteditable="true"></div>
-            <button onclick="generateData()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold hover:bg-indigo-600 shadow-xl transition-all">게시물 올리기 및 데이터 복사</button>
+            <button onclick="generateData()" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-bold hover:bg-indigo-600 shadow-xl transition-all active:scale-[0.98]">기사 발행</button>
         </section>
 
         <section class="mb-12">
-            <h2 class="text-xl font-bold mb-6">2. 게시물 관리</h2>
-            <div id="manage-list" class="grid gap-3"></div>
+            <h2 class="text-xl font-bold mb-6">2. 게시물 관리 📋</h2>
+            <div id="manage-list" class="grid gap-3">
+                <p class="text-slate-400 text-sm">게시물을 불러오는 중...</p>
+            </div>
         </section>
 
         <section>
             <h2 class="text-xl font-bold mb-6">3. 질문 답변 및 관리 💬</h2>
-            <div id="admin-request-list" class="space-y-4"></div>
+            <div id="admin-request-list" class="space-y-4">
+                <p class="text-slate-400 text-sm">질문을 불러오는 중...</p>
+            </div>
         </section>
     </div>
 
-    <script>
-        const subCats = { "과학": ["물리", "화학", "생명", "지구", "정보"], "인문": ["철학", "역사", "문학"], "사회": ["정치", "경제", "문화"] };
-        function updateSub() {
-            const main = document.getElementById('main-cat').value;
-            document.getElementById('sub-cat').innerHTML = subCats[main].map(s => `<option value="${s}">${s}</option>`).join('');
-        }
-        function insertImage(input) {
-            const file = input.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => { const img = document.createElement('img'); img.src = e.target.result; document.getElementById('editor').appendChild(img); };
-            reader.readAsDataURL(file);
-        }
-        function generateData() {
-            const title = document.getElementById('title').value;
-            const content = document.getElementById('editor').innerHTML;
-            if(!title) return alert("제목을 입력하세요.");
-            const news = { id: Date.now(), main: document.getElementById('main-cat').value, sub: document.getElementById('sub-cat').value, title, content, date: new Date().toLocaleDateString('ko-KR') };
-            let list = JSON.parse(localStorage.getItem('my_news_list')) || [];
-            list.unshift(news);
-            localStorage.setItem('my_news_list', JSON.stringify(list));
-            navigator.clipboard.writeText(JSON.stringify(list, null, 2));
-            alert("발행 성공!");
-            location.reload();
-        }
-        function loadNewsList() {
-            const list = JSON.parse(localStorage.getItem('my_news_list')) || [];
-            document.getElementById('manage-list').innerHTML = list.map(n => `
-                <div class="flex justify-between bg-white p-4 rounded-2xl border items-center">
-                    <span class="font-bold text-slate-800 text-sm truncate max-w-md">${n.title}</span>
-                    <button onclick="deleteNews(${n.id})" class="text-red-500 font-bold text-xs bg-red-50 px-3 py-1 rounded-lg">삭제</button>
-                </div>`).join('');
-        }
-        function deleteNews(id) { if(!confirm("삭제할까요?")) return; let list = JSON.parse(localStorage.getItem('my_news_list')).filter(n => n.id !== id); localStorage.setItem('my_news_list', JSON.stringify(list)); loadNewsList(); }
+<script type="module">
+    import { db, ref, push, set, onValue, remove, update, isAdmin } from './firebase-config.js';
 
-        function loadRequests() {
-            const list = JSON.parse(localStorage.getItem('news_requests')) || [];
-            document.getElementById('admin-request-list').innerHTML = list.map(r => `
-                <div class="bg-white p-6 rounded-2xl border ${r.answer ? 'border-slate-100 opacity-60' : 'border-indigo-300 shadow-md'}">
-                    <div class="flex justify-between mb-2">
-                        <span class="text-[10px] font-bold text-indigo-500">@${r.nickname}</span>
-                        <button onclick="deleteReq(${r.id})" class="text-[10px] text-red-400">삭제</button>
-                    </div>
-                    <p class="font-bold text-slate-800 mb-4">Q. ${r.content}</p>
-                    ${r.answer ? `<p class="text-sm text-indigo-600 bg-indigo-50 p-3 rounded-xl font-medium">A. ${r.answer}</p>` 
-                    : `<div><input id="ans-${r.id}" placeholder="답변 입력..." class="w-full p-3 bg-slate-50 rounded-xl text-sm mb-2 outline-none border-none">
-                       <button onclick="submitAns(${r.id})" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold">답변 달기</button></div>`}
-                </div>`).join('');
-        }
-        function submitAns(id) {
-            const text = document.getElementById(`ans-${id}`).value; if(!text) return;
-            let list = JSON.parse(localStorage.getItem('news_requests'));
-            list.find(r => r.id === id).answer = text;
-            localStorage.setItem('news_requests', JSON.stringify(list));
-            loadRequests();
-        }
-        function deleteReq(id) { if(!confirm("질문을 삭제할까요?")) return; let list = JSON.parse(localStorage.getItem('news_requests')).filter(r => r.id !== id); localStorage.setItem('news_requests', JSON.stringify(list)); loadRequests(); }
+    // [중요] 이미지 압축 기능: 기존 틀 유지하면서 내부적으로 용량만 줄임
+    window.insertImage = (input) => {
+        const file = input.files[0];
+        if (!file) return;
 
-        window.onload = () => { updateSub(); loadNewsList(); loadRequests(); };
-    </script>
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const maxWidth = 800; // 너비 제한으로 용량 최적화
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = (maxWidth * height) / width;
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% 화질 압축
+                const newImg = document.createElement('img');
+                newImg.src = compressedDataUrl;
+                document.getElementById('editor').appendChild(newImg);
+            };
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // 1. 뉴스 발행 함수
+    window.generateData = () => {
+        const title = document.getElementById('title').value.trim();
+        const content = document.getElementById('editor').innerHTML;
+        const main = document.getElementById('main-cat').value;
+        const sub = document.getElementById('sub-cat').value.trim() || "기타";
+
+        if(!title || content === "") return alert("제목과 본문을 입력하세요!");
+
+        const newsRef = ref(db, 'news');
+        push(newsRef, {
+            main, sub, title, content,
+            date: new Date().toLocaleDateString('ko-KR')
+        }).then(() => {
+            alert("뉴스 발행 성공! ");
+            location.reload(); // 성공 후 새로고침
+        }).catch(err => {
+            alert("오류 발생: 사진 용량이 너무 클 수 있습니다.");
+            console.error(err);
+        });
+    };
+
+    // 2. 게시물 관리 (뉴스 삭제용 리스트)
+    onValue(ref(db, 'news'), (snapshot) => {
+        const data = snapshot.val();
+        const listDiv = document.getElementById('manage-list');
+        if(!data) { listDiv.innerHTML = "<p class='text-slate-300'>발행된 기사가 없습니다.</p>"; return; }
+
+        const list = Object.keys(data).map(k => ({id:k, ...data[k]})).reverse();
+        listDiv.innerHTML = list.map(n => `
+            <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                <div>
+                    <span class="text-[10px] font-bold text-indigo-500 uppercase">${n.main} > ${n.sub}</span>
+                    <p class="font-bold text-slate-800 truncate max-w-md">${n.title}</p>
+                </div>
+                <button onclick="deleteNews('${n.id}')" class="text-red-500 font-bold text-xs hover:bg-red-50 px-3 py-2 rounded-lg transition-all">삭제</button>
+            </div>
+        `).join('');
+    });
+
+    window.deleteNews = (id) => {
+        if(confirm("이 기사를 완전히 삭제하시겠습니까?")) {
+            remove(ref(db, `news/${id}`));
+        }
+    };
+
+    // 3. 질문 답변 관리
+    onValue(ref(db, 'requests'), (snapshot) => {
+        const data = snapshot.val();
+        const box = document.getElementById('admin-request-list');
+        if(!data) { box.innerHTML = "<p class='text-slate-300'>질문이 없습니다.</p>"; return; }
+
+        const list = Object.keys(data).map(k => ({id:k, ...data[k]})).reverse();
+        box.innerHTML = list.map(r => `
+            <div class="bg-white p-6 rounded-3xl border ${r.answer ? 'border-slate-100 opacity-60' : 'border-indigo-500 shadow-md'} mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="font-black text-indigo-500 text-sm">@${r.nickname}</span>
+                    <button onclick="delReq('${r.id}')" class="text-slate-300 hover:text-red-500 text-xs">삭제</button>
+                </div>
+                <p class="font-bold text-slate-800 mb-4 italic">"${r.content}"</p>
+                ${r.answer ? 
+                    `<p class="text-sm font-medium text-indigo-600 bg-indigo-50 p-4 rounded-2xl">답변완료: ${r.answer}</p>` : 
+                    `<div class="mt-2">
+                        <input id="ans-${r.id}" class="w-full border-2 border-slate-100 p-3 rounded-xl text-sm focus:border-indigo-500 outline-none mb-2" placeholder="이 질문에 답변을 작성하세요">
+                        <button onclick="sendAns('${r.id}')" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-xs hover:bg-indigo-700 transition-all">답변 등록하기</button>
+                    </div>`
+                }
+            </div>`).join('');
+    });
+
+    window.sendAns = (id) => {
+        const text = document.getElementById(`ans-${id}`).value;
+        if(!text) return alert("답변 내용을 입력하세요!");
+        update(ref(db, `requests/${id}`), { answer: text });
+    };
+
+    window.delReq = (id) => { if(confirm("이 질문을 삭제할까요?")) remove(ref(db, `requests/${id}`)); };
+</script>
 </body>
 </html>
