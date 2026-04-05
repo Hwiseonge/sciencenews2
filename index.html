@@ -2,83 +2,157 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>11.NEWS - 메인 뉴스룸</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.NEWS - 실시간 뉴스룸</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
-        body { font-family: 'Pretendard', sans-serif; background-color: #fcfcfd; }
-        .nav-btn { transition: all 0.3s; color: #64748b; }
-        .nav-btn.active-btn { color: #4f46e5; font-weight: 800; position: relative; }
-        .nav-btn.active-btn::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: #4f46e5; border-radius: 50%; }
-        .news-card { height: 380px; display: flex; flex-direction: column; background: white; border-radius: 24px; border: 1px solid #f1f5f9; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow: hidden; }
-        .news-card:hover { transform: translateY(-10px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); }
+        body { font-family: 'Pretendard', sans-serif; background-color: #fcfcfd; color: #1a1a1a; }
+        
+        /* 카테고리 애니메이션 */
+        .nav-btn { position: relative; transition: all 0.3s ease; color: #64748b; }
+        .nav-btn.active-btn { color: #4f46e5; font-weight: 800; }
+        .nav-btn.active-btn::after {
+            content: ''; position: absolute; bottom: -8px; left: 50%;
+            transform: translateX(-50%); width: 4px; height: 4px;
+            background-color: #4f46e5; border-radius: 50%;
+        }
+
+        /* 뉴스 카드 디자인 */
+        .news-card { 
+            height: 380px; display: flex; flex-direction: column; 
+            background: white; border-radius: 24px; border: 1px solid #f1f5f9;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+        }
+        .news-card:hover { 
+            transform: translateY(-10px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
+
     <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100">
         <div class="container mx-auto px-6 h-20 flex items-center justify-between">
-            <h1 class="text-2xl font-extrabold tracking-tighter text-slate-900 cursor-pointer" onclick="location.reload()">11<span class="text-indigo-600">.</span>NEWS</h1>
+            <h1 class="text-2xl font-extrabold tracking-tighter text-slate-900 cursor-pointer" onclick="location.reload()">
+                11<span class="text-indigo-600">.</span>NEWS
+            </h1>
             <div class="flex items-center gap-4">
-                <button id="admin-indicator" class="hidden bg-indigo-600 text-white px-3 py-1.5 rounded-full text-[10px] font-black shadow-lg hover:bg-red-500 transition-all">ADMIN MODE</button>
-                <button onclick="goLogin()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 hover:bg-slate-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                <button id="admin-indicator" class="hidden flex items-center gap-2 bg-indigo-600 text-white px-3 py-1.5 rounded-full shadow-lg hover:bg-red-500 transition-all group">
+                    <span class="text-[10px] font-black uppercase tracking-widest">Admin Mode</span>
+                    <span class="text-[10px] hidden group-hover:inline ml-1 font-bold">(Logout)</span>
+                </button>
+                
+                <button onclick="goLogin()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-50 hover:bg-slate-100 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
                 </button>
             </div>
         </div>
+        
         <nav class="container mx-auto px-6 pb-4 flex gap-8 overflow-x-auto no-scrollbar justify-center items-center">
             <button onclick="filterNews('전체', this)" class="nav-btn active-btn text-sm font-semibold whitespace-nowrap">전체보기</button>
             <button onclick="filterNews('과학', this)" class="nav-btn text-sm font-semibold whitespace-nowrap">과학공학</button>
             <button onclick="filterNews('인문', this)" class="nav-btn text-sm font-semibold whitespace-nowrap">인문예술</button>
             <button onclick="filterNews('사회', this)" class="nav-btn text-sm font-semibold whitespace-nowrap">사회경제</button>
             <div class="w-px h-3 bg-slate-200 mx-2"></div>
-            <button onclick="location.href='request.html'" class="text-sm font-bold text-indigo-600 whitespace-nowrap hover:bg-indigo-50 px-3 py-1 rounded-full transition-all">질문하기 💬</button>
+            <button onclick="location.href='request.html'" class="text-sm font-bold text-indigo-600 whitespace-nowrap hover:bg-indigo-50 px-3 py-1 rounded-full transition-all">
+                질문하기 💬
+            </button>
         </nav>
     </header>
 
     <main class="container mx-auto px-6 py-12">
-        <div id="news-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10"></div>
+        <div id="news-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div class="col-span-full text-center py-20 text-slate-300 font-medium italic">뉴스 데이터를 불러오고 있습니다...</div>
+        </div>
     </main>
 
-    <script>
-        const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+    <script type="module">
+        import { db, ref, onValue, isAdmin } from './firebase-config.js';
 
-        // 관리자 UI 업데이트 및 로그아웃
+        // [1] 관리자 UI 처리
         if(isAdmin) {
             const badge = document.getElementById('admin-indicator');
             badge.classList.remove('hidden');
-            badge.onclick = () => { if(confirm("로그아웃하시겠습니까?")) { sessionStorage.removeItem('isAdmin'); location.reload(); }};
+            badge.onclick = () => {
+                if(confirm("관리자 모드를 로그아웃하시겠습니까?")) {
+                    sessionStorage.removeItem('isAdmin');
+                    location.reload();
+                }
+            };
         }
 
-        function goLogin() {
-            isAdmin ? location.href='admin.html' : location.href='login.html';
-        }
+        // [2] 로그인 버튼 클릭 시 이동 로직
+        window.goLogin = () => {
+            if(isAdmin) {
+                location.href = 'admin.html';
+            } else {
+                location.href = 'login.html';
+            }
+        };
 
+        // [3] 뉴스 데이터 실시간 로드 (onValue 사용)
         function loadNews(filter = '전체') {
-            const list = JSON.parse(localStorage.getItem('my_news_list')) || [];
-            const grid = document.getElementById('news-grid');
-            const filtered = filter === '전체' ? list : list.filter(n => n.main === filter);
-            grid.innerHTML = filtered.map(n => {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = n.content;
-                const imgSrc = tempDiv.querySelector('img')?.src || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c';
-                return `
-                <div onclick="location.href='index2.html?id=${n.id}'" class="news-card cursor-pointer">
-                    <div class="h-[220px] overflow-hidden"><img src="${imgSrc}" class="w-full h-full object-cover"></div>
-                    <div class="p-6 flex flex-col justify-between flex-grow">
-                        <div><span class="text-[10px] font-bold text-indigo-500 uppercase mb-2 block">${n.sub}</span>
-                        <h2 class="text-xl font-bold text-slate-900 line-clamp-2 leading-tight">${n.title}</h2></div>
-                        <div class="flex justify-between items-center mt-4"><span class="text-[11px] text-slate-400">${n.date}</span><span class="text-indigo-600 text-xs font-bold">READ →</span></div>
+            const newsRef = ref(db, 'news');
+            
+            // Firebase가 데이터 변화를 감시하다가 바뀌면 즉시 실행됨
+            onValue(newsRef, (snapshot) => {
+                const data = snapshot.val();
+                const grid = document.getElementById('news-grid');
+                
+                if(!data) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400 font-bold">아직 등록된 기사가 없습니다.</div>`;
+                    return;
+                }
+
+                // 객체를 배열로 변환 (ID 포함) 후 최신순 정렬
+                const list = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key]
+                })).reverse();
+
+                const filtered = filter === '전체' ? list : list.filter(n => n.main === filter);
+
+                grid.innerHTML = filtered.map(n => {
+                    // 본문에서 첫 번째 이미지 추출
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = n.content;
+                    const firstImg = tempDiv.querySelector('img');
+                    const imgSrc = firstImg ? firstImg.src : 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=1000';
+
+                    return `
+                    <div onclick="location.href='index2.html?id=${n.id}'" class="news-card cursor-pointer">
+                        <div class="h-[220px] overflow-hidden">
+                            <img src="${imgSrc}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" alt="기사 이미지">
+                        </div>
+                        <div class="p-6 flex flex-col justify-between flex-grow">
+                            <div>
+                                <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-2 block">${n.sub}</span>
+                                <h2 class="text-xl font-bold text-slate-900 line-clamp-2 leading-tight tracking-tight">${n.title}</h2>
+                            </div>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="text-[11px] text-slate-400 font-medium">${n.date}</span>
+                                <span class="text-indigo-600 text-xs font-bold">READ →</span>
+                            </div>
+                        </div>
                     </div>
-                </div>`;
-            }).join('');
+                    `;
+                }).join('');
+            });
         }
 
-        function filterNews(cat, btn) {
+        // [4] 카테고리 필터 클릭 이벤트 (전역 노출)
+        window.filterNews = (cat, btn) => {
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-btn'));
             btn.classList.add('active-btn');
             loadNews(cat);
-        }
+        };
+
+        // 초기 로드
         window.onload = () => loadNews();
     </script>
 </body>
