@@ -2,95 +2,71 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>11반 뉴스 - 상세보기</title>
+    <title>11.NEWS - 상세보기</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
-        body { font-family: 'Pretendard', sans-serif; background-color: white; color: #1a1a1a; line-height: 1.8; }
-        
-        /* 본문 내 이미지 스타일 강제 지정 */
-        #content-area img { 
-            width: 100%; 
-            border-radius: 24px; 
-            margin: 2.5rem 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-        #content-area p { margin-bottom: 1.5rem; font-size: 1.1rem; color: #334155; }
+        body { font-family: 'Pretendard', sans-serif; }
     </style>
 </head>
-<body>
-
-    <header class="bg-white border-b border-slate-100 sticky top-0 z-50">
-        <div class="container mx-auto px-6 h-20 flex items-center justify-between">
-            <h1 class="text-2xl font-extrabold tracking-tighter text-slate-900 cursor-pointer" onclick="location.href='index.html'">
-                11<span class="text-indigo-600">.</span>NEWS
-            </h1>
-            <button onclick="history.back()" class="text-sm font-bold text-slate-500 hover:text-indigo-600">뒤로가기</button>
-        </div>
-    </header>
-
-    <main class="max-w-3xl mx-auto px-6 py-16">
-        <div class="mb-12">
-            <div id="category-badge" class="text-indigo-600 font-bold text-xs uppercase tracking-widest mb-4">CATEGORY</div>
-            <h1 id="main-title" class="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight mb-6">제목을 불러오는 중...</h1>
-            <div class="flex items-center text-slate-400 text-sm font-medium">
-                <span id="post-date">DATE</span>
-                <span class="mx-3 text-slate-200">|</span>
-                <span>By 관리자</span>
-            </div>
+<body class="bg-white">
+    <main class="max-w-3xl mx-auto px-6 py-20">
+        <button onclick="history.back()" class="text-slate-400 font-bold mb-10 hover:text-indigo-600">← 뒤로가기</button>
+        
+        <div id="loading-spinner" class="text-center py-20">
+            <p class="text-slate-400 animate-pulse">기사를 불러오는 중입니다...</p>
         </div>
 
-        <article id="content-area" class="prose prose-slate max-w-none">
-            </article>
-
-        <footer class="mt-20 pt-10 border-t border-slate-100 text-center">
-            <button onclick="location.href='index.html'" class="bg-slate-900 text-white px-10 py-4 rounded-full font-bold hover:bg-indigo-600 transition-all">목록으로 돌아가기</button>
-        </footer>
+        <article id="news-article" class="hidden">
+            <span id="news-info" class="text-indigo-600 font-bold text-sm uppercase tracking-widest"></span>
+            <h1 id="news-title" class="text-4xl font-black text-slate-900 mt-4 mb-8 leading-tight"></h1>
+            <div id="news-content" class="prose max-w-none text-slate-700 leading-relaxed text-lg">
+                </div>
+        </article>
     </main>
 
-    <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const postId = urlParams.get('id');
-        const list = JSON.parse(localStorage.getItem('my_news_list')) || [];
-        const post = list.find(p => p.id == postId);
+    <script type="module">
+        import { db, ref, get } from './firebase-config.js';
 
-        if(post) {
-            document.getElementById('category-badge').innerText = post.main + " / " + post.sub;
-            document.getElementById('main-title').innerText = post.title;
-            document.getElementById('post-date').innerText = post.date;
-            document.getElementById('content-area').innerHTML = post.content;
-            document.title = post.title + " - 11반 뉴스";
-        } else {
-            alert("존재하지 않는 기사입니다.");
-            location.href = 'index12.html';
-        
+        // 1. URL에서 id 파라미터 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const newsId = urlParams.get('id');
+
+        async function fetchNewsDetail() {
+            if (!newsId) {
+                alert("기사 ID가 없습니다.");
+                location.href = 'index.html';
+                return;
+            }
+
+            try {
+                // 2. Firebase 경로 설정 (news 폴더 안의 해당 ID)
+                const newsRef = ref(db, `news/${newsId}`);
+                const snapshot = await get(newsRef);
+
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+
+                    // 3. HTML에 데이터 채우기
+                    document.getElementById('news-title').innerText = data.title;
+                    document.getElementById('news-info').innerText = `${data.main} > ${data.sub} | ${data.date}`;
+                    document.getElementById('news-content').innerHTML = data.content;
+
+                    // 4. 로딩 숨기고 본문 보여주기
+                    document.getElementById('loading-spinner').classList.add('hidden');
+                    document.getElementById('news-article').classList.remove('hidden');
+                    document.title = data.title;
+                } else {
+                    alert("해당 기사를 찾을 수 없습니다.");
+                    location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error("Firebase 에러 상세:", error);
+                alert("데이터 로딩 실패: " + error.message);
+            }
         }
 
-
-        // 관리자 체크 및 로그아웃 기능
-const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
-
-function updateAdminUI() {
-    const adminBtn = document.getElementById('admin-indicator');
-    if (adminBtn && isAdmin) {
-        adminBtn.classList.remove('hidden');
-        adminBtn.onclick = () => {
-            if (confirm("관리자 모드를 로그아웃하시겠습니까?")) {
-                sessionStorage.removeItem('isAdmin');
-                location.reload();
-            }
-        };
-    }
-}
-
-// 로그인 버튼 클릭 시 로직 (이미 로그인 상태면 바로 admin으로)
-function goLogin() {
-    if (isAdmin) {
-        location.href = 'admin.html';
-    } else {
-        location.href = 'login.html';
-    }
-}
+        window.onload = fetchNewsDetail;
     </script>
 </body>
 </html>
