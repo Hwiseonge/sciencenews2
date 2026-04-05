@@ -67,101 +67,45 @@
         </section>
     </main>
 
-    <script>
-        // 관리자 상태 체크
-        const isAdmin = sessionStorage.getItem('isAdmin') === 'true';
+    <script type="module">
+    import { db, ref, push, onValue, isAdmin } from './firebase-config.js';
 
-        // 관리자 UI 초기화
-        if(isAdmin) {
-            const badge = document.getElementById('admin-indicator');
-            badge.classList.remove('hidden');
-            badge.onclick = () => {
-                if(confirm("관리자 모드를 로그아웃하시겠습니까?")) {
-                    sessionStorage.removeItem('isAdmin');
-                    location.reload();
-                }
-            };
-        }
+    // 질문 제출
+    window.submitRequest = () => {
+        const nickname = document.getElementById('nickname-input').value.trim() || "익명";
+        const content = document.getElementById('request-input').value.trim();
+        if(!content) return alert("내용을 입력해주세요!");
 
-        // 질문 제출
-        function submitRequest() {
-            const nickname = document.getElementById('nickname-input').value.trim() || "익명";
-            const content = document.getElementById('request-input').value.trim();
-
-            if(!content) return alert("질문 내용을 입력해주세요!");
-
-            const newReq = {
-                id: Date.now(),
-                nickname: nickname,
-                content: content,
-                answer: "", 
-                date: new Date().toLocaleDateString('ko-KR')
-            };
-
-            let list = JSON.parse(localStorage.getItem('news_requests')) || [];
-            list.unshift(newReq);
-            localStorage.setItem('news_requests', JSON.stringify(list));
-
-            // 입력창 초기화
-            document.getElementById('nickname-input').value = "";
+        push(ref(db, 'requests'), {
+            nickname, content, answer: "", date: new Date().toLocaleDateString('ko-KR')
+        }).then(() => {
+            alert("전달되었습니다!");
             document.getElementById('request-input').value = "";
-            
-            alert("질문이 성공적으로 전달되었습니다! 관리자 답변 후 공개됩니다.");
-            loadRequests();
-        }
+        });
+    };
 
-        // 리스트 로드
-        function loadRequests() {
-            const list = JSON.parse(localStorage.getItem('news_requests')) || [];
-            const box = document.getElementById('request-list');
-            
-            // 일반 사용자는 답변이 있는 것만, 관리자는 전체 보기
-            const displayList = isAdmin ? list : list.filter(r => r.answer !== "");
-            
-            document.getElementById('req-count').innerText = `${displayList.length} MESSAGES`;
+    // 실시간 목록 로드 (스크롤 영역)
+    onValue(ref(db, 'requests'), (snapshot) => {
+        const data = snapshot.val();
+        const box = document.getElementById('request-list');
+        if(!data) { box.innerHTML = "질문이 없습니다."; return; }
 
-            if(displayList.length === 0) {
-                box.innerHTML = `
-                    <div class="py-20 text-center bg-white rounded-[2rem] border border-dashed border-slate-200">
-                        <p class="text-slate-400 font-medium">아직 공개된 질문이 없습니다.</p>
-                    </div>`;
-                return;
-            }
+        const list = Object.keys(data).map(k => ({id:k, ...data[k]})).reverse();
+        // 답변 완료된 것만 보여주기 (관리자는 모두 보기)
+        const displayList = isAdmin ? list : list.filter(r => r.answer !== "");
 
-            box.innerHTML = displayList.map(r => `
-                <div class="request-card bg-white p-7 border border-slate-100 shadow-sm relative">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 bg-indigo-500 rounded-full"></span>
-                            <span class="text-xs font-black text-slate-900 tracking-tight">@${r.nickname}</span>
-                        </div>
-                        <span class="text-[10px] text-slate-300 font-bold tracking-widest">${r.date}</span>
-                    </div>
-
-                    <div class="mb-6">
-                        <p class="text-slate-700 font-bold text-lg leading-snug italic italic">
-                            "${r.content}"
-                        </p>
-                    </div>
-
-                    <div class="answer-area">
-                        ${r.answer 
-                            ? `<div class="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
-                                 <div class="flex items-center gap-2 mb-2">
-                                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Admin Answer</p>
-                                 </div>
-                                 <p class="text-indigo-900 font-medium text-sm leading-relaxed">${r.answer}</p>
-                               </div>`
-                            : isAdmin 
-                                ? `<p class="text-xs text-amber-500 font-bold bg-amber-50 px-3 py-2 rounded-lg inline-block">답변 대기 중 (관리자 모드에서 답변 가능)</p>`
-                                : '' 
-                        }
-                    </div>
+        box.innerHTML = displayList.map(r => `
+            <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-4">
+                <div class="flex justify-between mb-2">
+                    <span class="text-xs font-black text-indigo-500">@${r.nickname}</span>
+                    <span class="text-[10px] text-slate-300">${r.date}</span>
                 </div>
-            `).join('');
-        }
-
-        window.onload = loadRequests;
-    </script>
+                <p class="font-bold mb-4 italic">"${r.content}"</p>
+                <div class="bg-indigo-50 p-4 rounded-2xl">
+                    <p class="text-sm text-indigo-900">${r.answer || "관리자 답변 대기 중..."}</p>
+                </div>
+            </div>`).join('');
+    });
+</script>
 </body>
 </html>
