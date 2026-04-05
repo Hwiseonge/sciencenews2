@@ -53,16 +53,35 @@
             </div>
         </div>
         
-        <nav class="container mx-auto px-6 pb-4 flex gap-8 overflow-x-auto no-scrollbar justify-center items-center">
-            <button onclick="filterNews('전체', this)" class="nav-btn active-btn text-sm font-semibold whitespace-nowrap">전체보기</button>
-            <button onclick="filterNews('과학', this)" class="nav-btn text-sm font-semibold whitespace-nowrap">과학공학</button>
-            <button onclick="filterNews('인문', this)" class="nav-btn text-sm font-semibold whitespace-nowrap">인문예술</button>
-            <button onclick="filterNews('사회', this)" class="nav-btn text-sm font-semibold whitespace-nowrap">사회경제</button>
-            <div class="w-px h-3 bg-slate-200 mx-2"></div>
-            <button onclick="location.href='request.html'" class="text-sm font-bold text-indigo-600 whitespace-nowrap hover:bg-indigo-50 px-3 py-1 rounded-full transition-all">
-                질문하기 💬
-            </button>
-        </nav>
+        <nav class="container mx-auto px-4 pb-4 flex items-center justify-start sm:justify-center overflow-x-auto no-scrollbar gap-4 md:gap-8">
+    <button onclick="filterNews('전체', this)" class="nav-btn active-btn text-sm font-bold whitespace-nowrap px-2">전체보기</button>
+    <button onclick="filterNews('과학', this)" class="nav-btn text-sm font-bold whitespace-nowrap px-2">과학공학</button>
+    <button onclick="filterNews('인문', this)" class="nav-btn text-sm font-bold whitespace-nowrap px-2">인문예술</button>
+    <button onclick="filterNews('사회', this)" class="nav-btn text-sm font-bold whitespace-nowrap px-2">사회경제</button>
+    
+    <div class="flex-shrink-0 w-px h-3 bg-slate-200 mx-1"></div>
+    
+    <button onclick="location.href='request.html'" class="flex-shrink-0 text-sm font-extrabold text-indigo-600 whitespace-nowrap bg-indigo-50 px-4 py-1.5 rounded-full transition-all active:scale-95">
+        질문하기 💬
+    </button>
+</nav>
+
+<style>
+    /* 가로 스크롤 바 숨기기 (깔끔한 디자인을 위해) */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;  /* IE, Edge */
+        scrollbar-width: none;  /* Firefox */
+        -webkit-overflow-scrolling: touch; /* 아이폰에서 부드러운 스크롤 */
+    }
+    
+    /* 버튼이 너무 다닥다닥 붙지 않게 여백 조정 */
+    .nav-btn {
+        flex-shrink: 0; /* 글자가 줄어들지 않게 고정 */
+    }
+</style>
     </header>
 
     <main class="container mx-auto px-6 py-12">
